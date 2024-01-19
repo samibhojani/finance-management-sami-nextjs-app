@@ -1,9 +1,11 @@
 "use client";
 
 import ExpenseCategoryItem from "@/components/ExpenseCategoryItem";
+import Modal from "@/components/Modal";
 import { currencyFormatter } from "@/libs/utils";
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -13,85 +15,98 @@ const DUMMY_DATA = [
     id: 1,
     title: "Entertainment",
     color: "#fff",
-    total: 5000
+    total: 5000,
   },
   {
     id: 2,
     title: "Misc",
     color: "#000",
-    total: 10000
+    total: 10000,
   },
   {
     id: 3,
     title: "Gas bill",
     color: "red",
-    total: 3000
+    total: 3000,
   },
   {
     id: 4,
     title: "KE bill",
     color: "green",
-    total: 7000
+    total: 7000,
   },
   {
     id: 5,
     title: "Rent",
     color: "yellow",
-    total: 2000
+    total: 2000,
   },
 ];
 
 export default function Home() {
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+
   return (
-    <main className="container max-w-2xl px-6 mx-auto">
-      <section className="py-3">
-        <small className="">Balance:</small>
-        <h2 className="text-4xl font-bold">{currencyFormatter(400000)}</h2>
-      </section>
+    <>
+      <Modal show={modalIsOpen} onClose={setModalIsOpen}>
+        <h3>Children displayed here</h3>
+      </Modal>
+      <main className="container max-w-2xl px-6 mx-auto">
+        <section className="py-3">
+          <small className="">Balance:</small>
+          <h2 className="text-4xl font-bold">{currencyFormatter(400000)}</h2>
+        </section>
 
-      <section className="flex items-center py-3 gap-2">
-        <button className="btn btn-primary ">+ Expenses</button>
-        <button className="btn btn-primary-outline">+ Income</button>
-      </section>
+        <section className="flex items-center py-3 gap-2">
+          <button
+            onClick={() => {
+              setModalIsOpen(true);
+            }}
+            className="btn btn-primary "
+          >
+            + Expenses
+          </button>
+          <button className="btn btn-primary-outline">+ Income</button>
+        </section>
 
-      {/* Expenses */}
-      <section>
-        <h3>My Expenses</h3>
-        <div className="flex flex-col gap-4 mt-6">
+        {/* Expenses */}
+        <section>
+          <h3>My Expenses</h3>
+          <div className="flex flex-col gap-4 mt-6">
+            {DUMMY_DATA.map((expense) => {
+              return (
+                <ExpenseCategoryItem
+                  color={expense.color}
+                  title={expense.title}
+                  total={expense.total}
+                />
+              );
+            })}
+          </div>
+        </section>
 
-          {DUMMY_DATA.map((expense) => {
-            return (
-              <ExpenseCategoryItem
-              color={expense.color}
-              title={expense.title}
-              total={expense.total}
+        {/* Chart Section */}
+
+        <section className="py-6">
+          <h3 className="text-2xl ">Stats</h3>
+          <div className="w-1/2 mx-auto">
+            <Doughnut
+              data={{
+                labels: DUMMY_DATA.map((expense) => expense.title),
+                datasets: [
+                  {
+                    label: "Expenses",
+                    data: DUMMY_DATA.map((expense) => expense.total),
+                    backgroundColor: DUMMY_DATA.map((expense) => expense.color),
+                    borderColor: ["#18181b"],
+                    borderWidth: 5,
+                  },
+                ],
+              }}
             />
-            )
-          })}
-
-        </div>
-      </section>
-
-      {/* Chart Section */}
-
-      <section className="py-6">
-        <h3 className="text-2xl ">Stats</h3>
-        <div className="w-1/2 mx-auto">
-          <Doughnut data={{
-            labels: DUMMY_DATA.map(expense => expense.title),
-            datasets: [
-              {
-                label: "Expenses",
-                data: DUMMY_DATA.map(expense => expense.total),
-                backgroundColor: DUMMY_DATA.map(expense => expense.color),
-                borderColor: ['#18181b'],
-                borderWidth: 5
-              }
-            ]
-          }}/>
-        </div>
-      </section>
-
-    </main>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

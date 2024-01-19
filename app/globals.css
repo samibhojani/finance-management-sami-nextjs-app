@@ -4,11 +4,11 @@
 
 @layer base {
   body {
-    @apply bg-slate-900 text-blue-50
+    @apply bg-slate-900 text-blue-50 relative;
    }
 
    button {
-    @apply transition-all duration-100 hover:scale-110
+    @apply transition-all duration-100 hover:scale-110;
    }
 }
 
