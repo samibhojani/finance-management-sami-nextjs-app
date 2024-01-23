@@ -44,12 +44,37 @@ const DUMMY_DATA = [
 ];
 
 export default function Home() {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [showAddIncomeModal, setshowAddIncomeModal] = useState(false);
 
   return (
     <>
-      <Modal show={modalIsOpen} onClose={setModalIsOpen}>
-        <h3>Children displayed here</h3>
+      {/* Add Income Modal */}
+      <Modal show={showAddIncomeModal} onClose={setshowAddIncomeModal}>
+        <form className="grp-style">
+          <div className="grp-style">
+          <label htmlFor="amount">Income Amount</label>
+          <input
+            type="number"
+            min={0.01}
+            step={0.01}
+            name="amount"
+            placeholder="Enter income amount"
+            required
+          />
+
+          </div>
+          <div className="grp-style">
+          <label htmlFor="description">Income Description</label>
+          <input
+            type="text"
+            name="description"
+            placeholder="Enter income description"
+            required
+          />
+          </div>
+
+          <button className="btn btn-primary font-semibold">Add income</button>
+        </form>
       </Modal>
       <main className="container max-w-2xl px-6 mx-auto">
         <section className="py-3">
@@ -58,15 +83,15 @@ export default function Home() {
         </section>
 
         <section className="flex items-center py-3 gap-2">
+          <button className="btn btn-primary ">+ Expenses</button>
           <button
             onClick={() => {
-              setModalIsOpen(true);
+              setshowAddIncomeModal(true);
             }}
-            className="btn btn-primary "
+            className="btn btn-primary-outline"
           >
-            + Expenses
+            + Income
           </button>
-          <button className="btn btn-primary-outline">+ Income</button>
         </section>
 
         {/* Expenses */}
