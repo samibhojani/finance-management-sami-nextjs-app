@@ -1,12 +1,26 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
+
+import { currencyFormatter } from "@/libs/utils";
 
 import ExpenseCategoryItem from "@/components/ExpenseCategoryItem";
 import Modal from "@/components/Modal";
-import { currencyFormatter } from "@/libs/utils";
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { useState } from "react";
 import { Doughnut } from "react-chartjs-2";
+
+// Firebase
+import { db } from "@/libs/firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
+
+// Icons
+import { FaRegTrashAlt } from "react-icons/fa";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -45,36 +59,130 @@ const DUMMY_DATA = [
 
 export default function Home() {
   const [showAddIncomeModal, setshowAddIncomeModal] = useState(false);
+  const [income, setIncome] = useState([]);
+  console.log(income);
+
+  const amountRef = useRef();
+  const descriptionRef = useRef();
+
+  // Handler Function
+  const addIncomeHandler = async (e) => {
+    e.preventDefault();
+
+    const newIncome = {
+      amount: amountRef.current.value,
+      description: descriptionRef.current.value,
+      createdAt: new Date(),
+    };
+
+    const collectionRef = collection(db, "income");
+    try {
+      const docSnap = await addDoc(collectionRef, newIncome);
+
+      // update state
+      setIncome((prevState) => {
+        return [
+          ...prevState,
+          {
+            id: docSnap.id,
+            ...newIncome,
+          },
+        ];
+      });
+
+      descriptionRef.current.value = "";
+      amountRef.current.value = "";
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const deleteIncomeEntryHandler = async (incomeId) => {
+    const docRef = doc(db, "income", incomeId);
+    try {
+      await deleteDoc(docRef);
+      setIncome((prevState) => {
+        return prevState.filter((i) => i.id !== incomeId);
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  useEffect(() => {
+    const getIncomeData = async () => {
+      const collectionRef = collection(db, "income");
+      const docsSnap = await getDocs(collectionRef);
+
+      const data = docsSnap.docs.map((doc) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+          createdAt: new Date(doc.data().createdAt.toMillis()),
+        };
+      });
+
+      setIncome(data);
+    };
+
+    getIncomeData();
+  }, []);
 
   return (
     <>
       {/* Add Income Modal */}
       <Modal show={showAddIncomeModal} onClose={setshowAddIncomeModal}>
-        <form className="grp-style">
+        <form onSubmit={addIncomeHandler} className="flex flex-col">
           <div className="grp-style">
-          <label htmlFor="amount">Income Amount</label>
-          <input
-            type="number"
-            min={0.01}
-            step={0.01}
-            name="amount"
-            placeholder="Enter income amount"
-            required
-          />
-
+            <label htmlFor="amount">Income Amount</label>
+            <input
+              type="number"
+              min={0.01}
+              step={0.01}
+              name="amount"
+              ref={amountRef}
+              placeholder="Enter income amount"
+              required
+            />
           </div>
           <div className="grp-style">
-          <label htmlFor="description">Income Description</label>
-          <input
-            type="text"
-            name="description"
-            placeholder="Enter income description"
-            required
-          />
+            <label htmlFor="description">Income Description</label>
+            <input
+              type="text"
+              name="description"
+              ref={descriptionRef}
+              placeholder="Enter income description"
+              required
+            />
           </div>
 
           <button className="btn btn-primary font-semibold">Add income</button>
         </form>
+
+        <div className="flex flex-col gap-4 mt-6">
+          <h3 className="text-2xl font-bold">Income History</h3>
+
+          {income.map((i) => {
+            return (
+              <div key={i.id} className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold ">{i.description}</p>
+                  <small className="text-xs">{i.createdAt.toISOString()}</small>
+                </div>
+                <p className="flex items-center gap-2">
+                  {currencyFormatter(i.amount)}
+                  <button
+                    onClick={() => {
+                      deleteIncomeEntryHandler(i.id);
+                    }}
+                  >
+                    <FaRegTrashAlt />
+                  </button>
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </Modal>
       <main className="container max-w-2xl px-6 mx-auto">
         <section className="py-3">
@@ -101,6 +209,7 @@ export default function Home() {
             {DUMMY_DATA.map((expense) => {
               return (
                 <ExpenseCategoryItem
+                  key={expense.id}
                   color={expense.color}
                   title={expense.title}
                   total={expense.total}
